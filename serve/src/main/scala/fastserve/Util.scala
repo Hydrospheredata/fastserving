@@ -1,5 +1,10 @@
+package fastserve
+
 object Util {
 
+  def mkUDF1(f: Any): Any => Any = f.asInstanceOf[Any => Any]
+
+  def callUDF1(f: Any, in: Any): Any = f.asInstanceOf[Any => Any](in)
   //TODO
   def callUDF(f: Any, in: Seq[Any]): Any = in.size match {
     case 0 => f.asInstanceOf[() => Any]()
