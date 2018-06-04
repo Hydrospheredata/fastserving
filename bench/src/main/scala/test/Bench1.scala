@@ -68,7 +68,7 @@ object Bench1 {
 
 
   val emptyDf = session.createDataFrame(session.sparkContext.emptyRDD[Row], inputData.schema)
-  val transformer = LogicalPlanInterpreter.fromTransformer(pipelineModel, emptyDf)
+  val transformer = FastInterpreter.fromTransformer(pipelineModel, emptyDf)
 
   val input = PlainDataset(
     columnsId = Map("features" -> 0),
