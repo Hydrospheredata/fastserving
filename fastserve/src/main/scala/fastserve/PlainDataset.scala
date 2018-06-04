@@ -6,23 +6,18 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 case class Column(name: String, items: Seq[Any])
 
-case class PlainDataset(
-  columnsId: Map[String, Int],
-  columns: Seq[Column]
-) {
+class PlainDataset(val columns: Seq[Column]) {
+
+  val columnsId = columns.zipWithIndex.map({case (c, i) => c.name -> i})
 
   def size: Int = columns.headOption.map(_.items.length).getOrElse(0)
 
   def addColumn(c: Column): PlainDataset = {
-    copy(
-      columnsId = columnsId + (c.name -> columns.size),
-      columns = columns :+ c
-    )
+    new PlainDataset(columns :+ c)
   }
 
   def replace(c: Column): PlainDataset = {
-    val id = columnsId(c.name)
-    copy(columns = columns.updated(id, c))
+    new PlainDataset(columns.map(o => if (o.name == c.name) c else o))
   }
 
   def toDataFrame(session: SparkSession, schema: StructType): DataFrame = {
@@ -36,11 +31,23 @@ case class PlainDataset(
     val rdd = session.sparkContext.parallelize(rows)
     session.createDataFrame(rdd, schema)
   }
+
+  override def hashCode(): Int = columns.hashCode()
+
+  override def equals(obj: Any): Boolean = obj match {
+    case PlainDataset(ocol) => ocol.sortBy(_.name).equals(columns.sortBy(_.name))
+    case oth => false
+  }
 }
 
 object PlainDataset {
 
-  val empty = PlainDataset(Map.empty, Seq.empty)
+  val empty = PlainDataset(Seq.empty: _*)
+
+  def apply(columns: Column*): PlainDataset =
+    new PlainDataset(columns)
+
+  def unapply(arg: PlainDataset): Option[Seq[Column]] = Some(arg.columns)
 
   def fromDataFrame(ds: DataFrame): PlainDataset = {
     val values = ds.collect()

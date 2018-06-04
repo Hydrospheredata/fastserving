@@ -39,17 +39,14 @@ class ModelsTest extends FunSpec with Matchers {
         StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
       ),
     input = PlainDataset(
-      columnsId = Map("features" -> 0),
-      columns = Seq(
-        Column("features", Seq(
-          Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
-          Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
-          Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
-          Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
-          Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
-          Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
-        ))
-      )
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
     )
   )
 
@@ -70,14 +67,11 @@ class ModelsTest extends FunSpec with Matchers {
         StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
       ),
     input = PlainDataset(
-      columnsId = Map("features" -> 0),
-      columns = Seq(
-        Column("features", Seq(
-          Vectors.dense(0.0, 0.0, 18.0, 1.0),
-          Vectors.dense(0.0, 1.0, 12.0, 0.0),
-          Vectors.dense(1.0, 0.0, 15.0, 0.1)
-        ))
-      )
+      Column("features", Seq(
+        Vectors.dense(0.0, 0.0, 18.0, 1.0),
+        Vectors.dense(0.0, 1.0, 12.0, 0.0),
+        Vectors.dense(1.0, 0.0, 15.0, 0.1)
+      ))
     )
   )
 //
@@ -633,11 +627,9 @@ class ModelsTest extends FunSpec with Matchers {
       val out = transformer(input)
 
       val origDf = pipelineModel.transform(input.toDataFrame(session, schema))
-      val origRows = origDf.collect()
+      val origToPlain = PlainDataset.fromDataFrame(origDf)
 
-      out.columnsId.keys.toSeq should contain theSameElementsAs origDf.columns.toSeq
-      out.size shouldBe origRows.length
-
+      out shouldBe origToPlain
     }
   }
 }
