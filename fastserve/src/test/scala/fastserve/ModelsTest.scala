@@ -635,8 +635,9 @@ class ModelsTest extends FunSpec with Matchers {
       val origDf = pipelineModel.transform(input.toDataFrame(session, schema))
       val origRows = origDf.collect()
 
-      out.columnsId.values.toSeq should contain theSameElementsAs origDf.columns.toSeq
+      out.columnsId.keys.toSeq should contain theSameElementsAs origDf.columns.toSeq
       out.size shouldBe origRows.length
+
     }
   }
 }

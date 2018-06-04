@@ -1,11 +1,11 @@
 package fastserve
 
-import fastserve.expressions.{Casts, UDFResolver}
+import fastserve.expressions.{Aliases, Casts, UDFResolver}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, Expression, NamedExpression, ScalaUDF}
 import org.apache.spark.sql.catalyst.plans.logical.{AnalysisBarrier, LogicalPlan, Project, ReturnAnswer}
 import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.types.{StructField, StructType}
@@ -14,8 +14,8 @@ import scala.annotation.switch
 
 object FastInterpreter extends UDFResolver {
 
-
-  def mkFastTransformer(plan: LogicalPlan, schema: StructType): FastTransformer = mkFastTransformer(ConstFastTransformer, plan, schema)
+  def mkFastTransformer(plan: LogicalPlan, schema: StructType): FastTransformer =
+    mkFastTransformer(ConstFastTransformer, plan, schema)
 
   def mkFastTransformer(curr: FastTransformer, plan: LogicalPlan, schema: StructType): FastTransformer = plan match {
     case barr: AnalysisBarrier => mkFastTransformer(curr, barr.child, schema)
@@ -26,18 +26,10 @@ object FastInterpreter extends UDFResolver {
         case ((t, schema), att: AttributeReference) =>
           val field = StructField(att.name, att.dataType, att.nullable, att.metadata)
           (t, schema.add(field))
-        case ((t, schema), al @ Alias(child, name)) => child match {
-          case udf: ScalaUDF =>
-            val next = t.compose(applyUDF(name, udf, schema))
-            val field = StructField(name, udf.dataType, udf.nullable)
-            next -> schema.add(field)
-          case x => throw new NotImplementedError(s"Unexpected alias($al) child: $x, ${x.getClass}")
-        }
+        case ((t, schema), al @ Alias(child, name)) => Aliases.applyAlias(t, schema, al)
         case (_, x) => throw new NotImplementedError(s"Unexpected expression in project(${pr}): ${x.getClass}")
       }
       mkFastTransformer(nextT, child, nextSchema)
-
-
 //      val trasformations = exprs.collect{
 //        case alias @ Alias(child, name) =>
 //          child match {

@@ -3,10 +3,10 @@ package fastserve.expressions
 
 import fastserve.PlainDataset
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{AttributeReference, Cast, Expression}
+import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, Expression, ScalaUDF}
 import org.apache.spark.sql.types._
 
-trait ColumnResolver {
+trait ColumnResolver  {
 
   def resolveColumnFully(e: Expression, schema: StructType): (String, DataType, Option[LocalTransform]) = e match {
     case ref: AttributeReference => (ref.name, ref.dataType, None)

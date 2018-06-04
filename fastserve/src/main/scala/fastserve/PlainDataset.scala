@@ -30,7 +30,7 @@ case class PlainDataset(
 
     val colls = columns.size
     val rows = (0 until size).map(y => {
-      val rowData = (0 until columns.size).map(x => columns(y).items(x))
+      val rowData = (0 until columns.size).map(x => columns(x).items(y))
       Row(rowData: _*)
     })
     val rdd = session.sparkContext.parallelize(rows)
