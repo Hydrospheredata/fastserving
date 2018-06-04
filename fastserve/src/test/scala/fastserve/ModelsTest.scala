@@ -170,33 +170,30 @@ class ModelsTest extends FunSpec with Matchers {
       ))
     )
   )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, Vectors.dense(1.0, 0.1, -8.0)),
-//      (1, Vectors.dense(2.0, 1.0, -4.0)),
-//      (2, Vectors.dense(4.0, 10.0, 8.0))
-//    )).toDF("id", "features"),
-//    stages = Seq(
-//      new MaxAbsScaler()
-//        .setInputCol("features")
-//        .setOutputCol("scaledFeatures")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("features" -> 0),
-//      columns = Seq(
-//        Column("features", Seq(
-//          Vectors.dense(1.0, 0.1, -8.0),
-//          Vectors.dense(2.0, 1.0, -4.0),
-//          Vectors.dense(4.0, 10.0, 8.0)
-//        ))
-//      )
-//    )
-//  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, Vectors.dense(1.0, 0.1, -8.0)),
+      (1, Vectors.dense(2.0, 1.0, -4.0)),
+      (2, Vectors.dense(4.0, 10.0, 8.0))
+    )).toDF("id", "features"),
+    stages = Seq(
+      new MaxAbsScaler()
+        .setInputCol("features")
+        .setOutputCol("scaledFeatures")
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(1.0, 0.1, -8.0),
+        Vectors.dense(2.0, 1.0, -4.0),
+        Vectors.dense(4.0, 10.0, 8.0)
+      ))
+    )
+  )
 //
 //  modelTest(
 //    trainData = session.createDataFrame(Seq(
