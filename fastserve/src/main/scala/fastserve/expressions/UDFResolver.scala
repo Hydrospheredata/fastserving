@@ -9,7 +9,7 @@ trait UDFResolver extends ColumnResolver {
 
   def applyUDF(column: String, udf: ScalaUDF, schema: StructType): LocalTransform = {
     val inputPrep = udf.children.map(c => resolveColumn(c, schema))
-    val (prepT, names) = inputPrep.foldLeft((identity[PlainDataset](_), Seq.empty[String])){
+    val (prepT, names) = inputPrep.foldLeft((identity[PlainDataset] _, Seq.empty[String])){
       case ((t, names), (name, Some(step))) =>  t.andThen(step) -> (name +: names)
       case ((t, names), (name, None)) =>  t -> (name +: names)
     }

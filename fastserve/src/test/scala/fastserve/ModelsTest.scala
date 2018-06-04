@@ -100,85 +100,76 @@ class ModelsTest extends FunSpec with Matchers {
       ))
     )
   )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, Array("Provectus", "is", "such", "a", "cool", "company")),
-//      (1, Array("Big", "data", "rules", "the", "world")),
-//      (2, Array("Cloud", "solutions", "are", "our", "future"))
-//    )).toDF("id", "words"),
-//    stages = Seq(
-//      new NGram().setN(2).setInputCol("words").setOutputCol("ngrams")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("words", new ArrayType(StringType, false)) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("words" -> 0),
-//      columns = Seq(
-//        Column("words", Seq(
-//          Array("Provectus", "is", "such", "a", "cool", "company"),
-//          Array("Big", "data", "rules", "the", "world"),
-//          Array("Cloud", "solutions", "are", "our", "future")
-//        ))
-//      )
-//    )
-//  )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      Vectors.dense(0.0, 10.3, 1.0, 4.0, 5.0),
-//      Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
-//      Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
-//    ).map(Tuple1.apply)).toDF("features"),
-//    stages = Seq(
-//      new StandardScaler()
-//        .setInputCol("features")
-//        .setOutputCol("scaledFeatures")
-//        .setWithStd(true)
-//        .setWithMean(false)
-//    ),
-//    schema =
-//      StructType(
-//        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("features" -> 0),
-//      columns = Seq(
-//        Column("features", Seq(
-//          Vectors.dense(0.0, 10.3, 1.0, 4.0, 5.0),
-//          Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
-//          Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
-//        ))
-//      )
-//    )
-//  )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, Seq("I", "saw", "the", "red", "balloon")),
-//      (1, Seq("Mary", "had", "a", "little", "lamb"))
-//    )).toDF("id", "raw"),
-//    stages = Seq(
-//      new StopWordsRemover()
-//        .setInputCol("raw")
-//        .setOutputCol("filtered")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("raw", new ArrayType(StringType, false)) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("raw" -> 0),
-//      columns = Seq(
-//        Column("raw", Seq(
-//          Seq("I", "saw", "the", "red", "balloon"),
-//          Seq("Mary", "had", "a", "little", "lamb")
-//        ))
-//      )
-//    )
-//  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, Array("Hydrosphere", "is", "such", "a", "cool", "company")),
+      (1, Array("Big", "data", "rules", "the", "world")),
+      (2, Array("Cloud", "solutions", "are", "our", "future"))
+    )).toDF("id", "words"),
+    stages = Seq(
+      new NGram().setN(2).setInputCol("words").setOutputCol("ngrams")
+    ),
+    schema =
+      StructType(
+        StructField("words", new ArrayType(StringType, false)) :: Nil
+      ),
+    input = PlainDataset(
+      Column("words", Seq(
+        Seq("Provectus", "is", "such", "a", "cool", "company"),
+        Seq("Big", "data", "rules", "the", "world"),
+        Seq("Cloud", "solutions", "are", "our", "future")
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      Vectors.dense(0.0, 10.3, 1.0, 4.0, 5.0),
+      Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+      Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+    ).map(Tuple1.apply)).toDF("features"),
+    stages = Seq(
+      new StandardScaler()
+        .setInputCol("features")
+        .setOutputCol("scaledFeatures")
+        .setWithStd(true)
+        .setWithMean(false)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(0.0, 10.3, 1.0, 4.0, 5.0),
+        Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+        Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, Seq("I", "saw", "the", "red", "balloon")),
+      (1, Seq("Mary", "had", "a", "little", "lamb"))
+    )).toDF("id", "raw"),
+    stages = Seq(
+      new StopWordsRemover()
+        .setInputCol("raw")
+        .setOutputCol("filtered")
+    ),
+    schema =
+      StructType(
+        StructField("raw", new ArrayType(StringType, false)) :: Nil
+      ),
+    input = PlainDataset(
+      Column("raw", Seq(
+        Seq("I", "saw", "the", "red", "balloon"),
+        Seq("Mary", "had", "a", "little", "lamb")
+      ))
+    )
+  )
 //
 //  modelTest(
 //    trainData = session.createDataFrame(Seq(
@@ -605,13 +596,10 @@ class ModelsTest extends FunSpec with Matchers {
     stages: Seq[PipelineStage],
     schema: StructType,
     input: PlainDataset
-  ):Unit = {
+  ): Unit = {
     val name = stages.map(_.getClass.getSimpleName).foldLeft("") {
       case ("", b) => b
       case (a, b) => a + "-" + b
-    }
-
-    def compare(pd: PlainDataset, df: DataFrame): Unit = {
     }
 
     it(name) {
