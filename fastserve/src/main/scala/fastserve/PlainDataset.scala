@@ -8,9 +8,11 @@ case class Column(name: String, items: Seq[Any])
 
 class PlainDataset(val columns: Seq[Column]) {
 
-  val columnsId = columns.zipWithIndex.map({case (c, i) => c.name -> i})
+  val columnsId: Map[String, Int] = columns.zipWithIndex.map({case (c, i) => c.name -> i}).toMap
 
   def size: Int = columns.headOption.map(_.items.length).getOrElse(0)
+
+  def columNames: Seq[String] = columnsId.keys.toSeq
 
   def addColumn(c: Column): PlainDataset = {
     new PlainDataset(columns :+ c)
@@ -36,7 +38,46 @@ class PlainDataset(val columns: Seq[Column]) {
 
   override def equals(obj: Any): Boolean = obj match {
     case PlainDataset(ocol) => ocol.sortBy(_.name).equals(columns.sortBy(_.name))
-    case oth => false
+    case _ => false
+  }
+
+  override def toString: String = {
+
+    def rowSeparator(colSizes: Seq[Int]): String = {
+      colSizes.map("-" * _).mkString("+", "+", "+")
+    }
+
+    def rowFormat(items: Seq[String], colSizes: Seq[Int]): String = {
+      items
+        .zip(colSizes)
+        .map((t) => if (t._2 == 0) "" else s"%${t._2}s".format(t._1))
+        .mkString("|", "|", "|")
+    }
+
+    var stringParts = List.empty[String]
+
+    val rowCount = (for (column <- columns) yield column.items.length).max
+    val sizes = columns.map(
+      column => (List(column.name) ++ column.items.map(_.toString)).map(_.length).max + 1
+    )
+
+    stringParts :+= rowSeparator(sizes)
+    stringParts :+= rowFormat(columNames, sizes)
+    stringParts :+= rowSeparator(sizes)
+    for (rowNumber <- List.range(0, rowCount)) {
+      val row = columns.map { (column) =>
+        if (column.items.lengthCompare(rowNumber) <= 0) {
+          "–"
+        } else {
+          column.items(rowNumber).toString
+        }
+      }
+
+      stringParts :+= rowFormat(row, sizes)
+    }
+    stringParts :+= rowSeparator(sizes)
+
+    stringParts.mkString("\n")
   }
 }
 
