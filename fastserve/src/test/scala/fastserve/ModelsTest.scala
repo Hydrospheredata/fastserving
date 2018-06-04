@@ -74,35 +74,32 @@ class ModelsTest extends FunSpec with Matchers {
       ))
     )
   )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(
-//      Seq(
-//        (0.0, "Hi I heard about Spark"),
-//        (0.0, "I wish Java could use case classes"),
-//        (1.0, "Logistic regression models are neat")
-//      )
-//    ).toDF("label", "sentence"),
-//    stages = Seq(
-//      new Tokenizer().setInputCol("sentence").setOutputCol("words"),
-//      new HashingTF().setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(20),
-//      new IDF().setInputCol("rawFeatures").setOutputCol("features")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("sentence", StringType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("sentence" -> 0),
-//      columns = Seq(
-//        Column("sentence", Seq(
-//          "Hi I heard about Spark",
-//          "I wish Java could use case classes",
-//          "Logistic regression models are neat"
-//        ))
-//      )
-//    )
-//  )
+
+  modelTest(
+    trainData = session.createDataFrame(
+      Seq(
+        (0.0, "Hi I heard about Spark"),
+        (0.0, "I wish Java could use case classes"),
+        (1.0, "Logistic regression models are neat")
+      )
+    ).toDF("label", "sentence"),
+    stages = Seq(
+      new Tokenizer().setInputCol("sentence").setOutputCol("words"),
+      new HashingTF().setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(20),
+      new IDF().setInputCol("rawFeatures").setOutputCol("features")
+    ),
+    schema =
+      StructType(
+        StructField("sentence", StringType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("sentence", Seq(
+        "Hi I heard about Spark",
+        "I wish Java could use case classes",
+        "Logistic regression models are neat"
+      ))
+    )
+  )
 //
 //  modelTest(
 //    trainData = session.createDataFrame(Seq(
