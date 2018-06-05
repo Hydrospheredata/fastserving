@@ -1,6 +1,6 @@
 package test
 
-import fastserve._
+import localserve._
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.RandomForestClassifier
@@ -9,36 +9,18 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.{Row, SparkSession}
 import org.openjdk.jmh.annotations.Benchmark
 
-import scala.collection.mutable.ArrayBuffer
-
 class Bench1 {
 
   import Bench1._
-
-//  @Benchmark
-//  def sparkml(): Unit = {
-//    pipelineModel.transform(inputData).collect()
-//  }
 
   @Benchmark
   def local(): Unit = {
     transformer(input)
   }
 
-
-//  @Benchmark
-//  def compose(): Unit = {
-//    y(4)
-//  }
-//  @Benchmark
-//  def direct(): Unit = {
-//    x(4)
-//  }
 }
 
 object Bench1 {
-  val x = (i: Int) => i
-  val y = (identity[Int] _).compose(x)
 
   val conf = new SparkConf()
     .setMaster("local[2]")
@@ -71,16 +53,13 @@ object Bench1 {
   val transformer = FastInterpreter.fromTransformer(pipelineModel, emptyDf)
 
   val input = PlainDataset(
-    columnsId = Map("features" -> 0),
-    columns = Seq(
-      Column("features", Seq(
-        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
-        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
-        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
-        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
-        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
-        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
-      ))
-    )
+    Column("features", Seq(
+      Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+      Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+      Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+      Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+      Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+      Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+    ))
   )
 }

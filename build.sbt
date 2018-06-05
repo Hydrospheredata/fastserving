@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion  := "2.11.8"
 
-val fastserve = project.in(file("fastserve"))
+val localserve = project.in(file("localserve"))
   .settings(
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "2.3.0",
@@ -12,5 +12,5 @@ val fastserve = project.in(file("fastserve"))
   )
 
 val bench = project.in(file("bench"))
-  .dependsOn(fastserve)
+  .dependsOn(localserve)
   .enablePlugins(JmhPlugin)

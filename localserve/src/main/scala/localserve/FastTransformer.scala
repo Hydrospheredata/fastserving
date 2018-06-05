@@ -1,4 +1,4 @@
-package fastserve
+package localserve
 
 sealed trait FastTransformer {
   def apply(d: PlainDataset): PlainDataset

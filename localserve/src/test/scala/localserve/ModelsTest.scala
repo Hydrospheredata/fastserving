@@ -1,4 +1,4 @@
-package fastserve
+package localserve
 
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.classification.{DecisionTreeClassifier, GBTClassifier, NaiveBayes, RandomForestClassifier}

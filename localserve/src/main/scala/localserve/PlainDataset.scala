@@ -1,4 +1,4 @@
-package fastserve
+package localserve
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.StructType
