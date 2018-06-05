@@ -1,13 +1,15 @@
 package fastserve
 
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.classification.RandomForestClassifier
+import org.apache.spark.ml.classification.{DecisionTreeClassifier, GBTClassifier, NaiveBayes, RandomForestClassifier}
+import org.apache.spark.ml.clustering.{GaussianMixture, KMeans}
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.linalg.VectorUDT
+import org.apache.spark.ml.regression.{DecisionTreeRegressor, GBTRegressor, LinearRegression, RandomForestRegressor}
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.scalatest.{FunSpec, Matchers}
 
@@ -216,368 +218,458 @@ class ModelsTest extends FunSpec with Matchers {
         Vectors.dense(2.0, 1.1, 1.0),
         Vectors.dense(3.0, 10.1, 3.0)
       ))
-    ),
-    defaultInput = Some(
-      PlainDataset(
-        Column("features", Seq(
-          Vectors.dense(1.0, 0.1, -1.0),
-          Vectors.dense(2.0, 1.1, 1.0),
-          Vectors.dense(3.0, 10.1, 3.0)
-        ))
-      )
     ))
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, "a"), (1, "b"), (2, "c"),
-//      (3, "a"), (4, "a"), (5, "c")
-//    )).toDF("id", "category"),
-//    stages = Seq(
-//      new StringIndexer()
-//        .setInputCol("category")
-//        .setOutputCol("categoryIndex"),
-//      new OneHotEncoder()
-//        .setInputCol("categoryIndex")
-//        .setOutputCol("categoryVec")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("category", StringType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("category" -> 0),
-//      columns = Seq(
-//        Column("category", Seq(
-//          "a", "b", "c", "a", "a", "c"
-//        ))
-//      )
-//    )
-//  )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      Vectors.sparse(5, Seq((1, 1.0), (3, 7.0))),
-//      Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
-//      Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
-//    ).map(Tuple1.apply)).toDF("features"),
-//    stages = Seq(
-//      new PCA()
-//        .setInputCol("features")
-//        .setOutputCol("pcaFeatures")
-//        .setK(3)
-//    ),
-//    schema =
-//      StructType(
-//        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("features" -> 0),
-//      columns = Seq(
-//        Column("features", Seq(
-//          Vectors.sparse(5, Seq((1, 1.0), (3, 7.0))),
-//          Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
-//          Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
-//        ))
-//      )
-//    )
-//  )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, Vectors.dense(1.0, 0.5, -1.0)),
-//      (1, Vectors.dense(2.0, 1.0, 1.0)),
-//      (2, Vectors.dense(4.0, 10.0, 2.0))
-//    )).toDF("id", "features"),
-//    stages = Seq(
-//      new Normalizer()
-//        .setInputCol("features")
-//        .setOutputCol("normFeatures")
-//        .setP(1.0)
-//    ),
-//    schema =
-//      StructType(
-//        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("features" -> 0),
-//      columns = Seq(
-//        Column("features", Seq(
-//          Vectors.dense(1.0, 0.5, -1.0),
-//          Vectors.dense(2.0, 1.0, 1.0),
-//          Vectors.dense(4.0, 10.0, 2.0)
-//        ))
-//      )
-//    )
-//  )
 
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      Vectors.dense(0.0, 1.0, -2.0, 3.0),
-//      Vectors.dense(-1.0, 2.0, 4.0, -7.0),
-//      Vectors.dense(14.0, -2.0, -5.0, 1.0)
-//    ).map(Tuple1.apply)).toDF("features"),
-//    steps = Seq(
-//      new DCT()
-//        .setInputCol("features")
-//        .setOutputCol("featuresDCT")
-//        .setInverse(false)
-//    ),
-//    columns = Seq(
-//      "featuresDCT"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new NaiveBayes()
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (0, 0.1),
-//      (1, 0.8),
-//      (2, 0.2)
-//    )).toDF("id", "feature"),
-//    steps = Seq(
-//      new Binarizer()
-//        .setInputCol("feature")
-//        .setOutputCol("binarized_feature")
-//        .setThreshold(5.0)
-//    ),
-//    columns = Seq(
-//      "binarized_feature"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps =
-//      Seq(
-//        new StringIndexer()
-//          .setInputCol("label")
-//          .setOutputCol("indexedLabel"),
-//        new VectorIndexer()
-//          .setInputCol("features")
-//          .setOutputCol("indexedFeatures")
-//          .setMaxCategories(4),
-//        new GBTClassifier()
-//          .setLabelCol("indexedLabel")
-//          .setFeaturesCol("indexedFeatures")
-//          .setMaxIter(10)
-//      ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new StringIndexer()
-//        .setInputCol("label")
-//        .setOutputCol("indexedLabel"),
-//      new VectorIndexer()
-//        .setInputCol("features")
-//        .setOutputCol("indexedFeatures")
-//        .setMaxCategories(4),
-//      new DecisionTreeClassifier()
-//        .setLabelCol("indexedLabel")
-//        .setFeaturesCol("indexedFeatures")
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (0L, "a b c d e spark", 1.0),
-//      (1L, "b d", 0.0),
-//      (2L, "spark f g h", 1.0),
-//      (3L, "hadoop mapreduce", 0.0)
-//    )).toDF("id", "text", "label"),
-//    steps = Seq(
-//      new Tokenizer().setInputCol("text").setOutputCol("words"),
-//      new HashingTF().setNumFeatures(1000).setInputCol("words").setOutputCol("features"),
-//      new LinearRegression()
-//        .setMaxIter(10)
-//        .setRegParam(0.3)
-//        .setElasticNetParam(0.8)
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4),
-//      new DecisionTreeRegressor().setLabelCol("label").setFeaturesCol("indexedFeatures")
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new StringIndexer().setInputCol("label").setOutputCol("indexedLabel"),
-//      new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4),
-//      new RandomForestClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures").setNumTrees(10)
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4),
-//      new RandomForestRegressor().setLabelCol("label").setFeaturesCol("indexedFeatures")
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new VectorIndexer()
-//        .setInputCol("features")
-//        .setOutputCol("indexedFeatures")
-//        .setMaxCategories(4),
-//      new GBTRegressor()
-//        .setLabelCol("label")
-//        .setFeaturesCol("indexedFeatures")
-//        .setMaxIter(10)
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new KMeans().setK(2).setSeed(1L)
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-//      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-//      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-//      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-//      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-//      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
-//    )).toDF("features", "label"),
-//    steps = Seq(
-//      new GaussianMixture().setK(2)
-//    ),
-//    columns = Seq(
-//      "prediction"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq(
-//      (0, "Hi I heard about Spark"),
-//      (1, "I wish Java could use case classes"),
-//      (2, "Logistic,regression,models,are,neat")
-//    )).toDF("id", "sentence"),
-//    steps = Seq(
-//      new RegexTokenizer()
-//        .setInputCol("sentence")
-//        .setOutputCol("words")
-//        .setPattern("\\W")
-//    ),
-//    columns = Seq(
-//      "words"
-//    )
-//  )
-//
-//  modelTest(
-//    data = session.createDataFrame(Seq((0, 18, 1.0, Vectors.dense(0.0, 10.0, 0.5), 1.0))
-//    ).toDF("id", "hour", "mobile", "userFeatures", "clicked"),
-//    steps = Seq(
-//      new VectorAssembler()
-//        .setInputCols(Array("hour", "mobile", "userFeatures"))
-//        .setOutputCol("features")
-//    ),
-//    columns = Seq(
-//      "features"
-//    )
-//  )
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, "a"), (1, "b"), (2, "c"),
+      (3, "a"), (4, "a"), (5, "c")
+    )).toDF("id", "category"),
+    stages = Seq(
+      new StringIndexer()
+        .setInputCol("category")
+        .setOutputCol("categoryIndex"),
+      new OneHotEncoder()
+        .setInputCol("categoryIndex")
+        .setOutputCol("categoryVec")
+    ),
+    schema =
+      StructType(
+        StructField("category", StringType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("category", Seq(
+        "a", "b", "c", "a", "a", "c"
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      Vectors.sparse(5, Seq((1, 1.0), (3, 7.0))),
+      Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+      Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+    ).map(Tuple1.apply)).toDF("features"),
+    stages = Seq(
+      new PCA()
+        .setInputCol("features")
+        .setOutputCol("pcaFeatures")
+        .setK(3)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.sparse(5, Seq((1, 1.0), (3, 7.0))),
+        Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+        Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, Vectors.dense(1.0, 0.5, -1.0)),
+      (1, Vectors.dense(2.0, 1.0, 1.0)),
+      (2, Vectors.dense(4.0, 10.0, 2.0))
+    )).toDF("id", "features"),
+    stages = Seq(
+      new Normalizer()
+        .setInputCol("features")
+        .setOutputCol("normFeatures")
+        .setP(1.0)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(1.0, 0.5, -1.0),
+        Vectors.dense(2.0, 1.0, 1.0),
+        Vectors.dense(4.0, 10.0, 2.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      Vectors.dense(0.0, 1.0, -2.0, 3.0),
+      Vectors.dense(-1.0, 2.0, 4.0, -7.0),
+      Vectors.dense(14.0, -2.0, -5.0, 1.0)
+    ).map(Tuple1.apply)).toDF("features"),
+    stages = Seq(
+      new DCT()
+        .setInputCol("features")
+        .setOutputCol("featuresDCT")
+        .setInverse(false)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(0.0, 1.0, -2.0, 3.0),
+        Vectors.dense(-1.0, 2.0, 4.0, -7.0),
+        Vectors.dense(14.0, -2.0, -5.0, 1.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new NaiveBayes()
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, 0.1),
+      (1, 0.8),
+      (2, 0.2)
+    )).toDF("id", "feature"),
+    stages = Seq(
+      new Binarizer()
+        .setInputCol("feature")
+        .setOutputCol("binarized_feature")
+        .setThreshold(5.0)
+    ),
+    schema =
+      StructType(
+        StructField("feature", DoubleType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("feature", Seq(0.1, 0.8, 0.2))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages =
+      Seq(
+        new StringIndexer()
+          .setInputCol("label")
+          .setOutputCol("indexedLabel"),
+        new VectorIndexer()
+          .setInputCol("features")
+          .setOutputCol("indexedFeatures")
+          .setMaxCategories(4),
+        new GBTClassifier()
+          .setLabelCol("indexedLabel")
+          .setFeaturesCol("indexedFeatures")
+          .setMaxIter(10)
+      ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new StringIndexer()
+        .setInputCol("label")
+        .setOutputCol("indexedLabel"),
+      new VectorIndexer()
+        .setInputCol("features")
+        .setOutputCol("indexedFeatures")
+        .setMaxCategories(4),
+      new DecisionTreeClassifier()
+        .setLabelCol("indexedLabel")
+        .setFeaturesCol("indexedFeatures")
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0L, "a b c d e spark", 1.0),
+      (1L, "b d", 0.0),
+      (2L, "spark f g h", 1.0),
+      (3L, "hadoop mapreduce", 0.0)
+    )).toDF("id", "text", "label"),
+    stages = Seq(
+      new Tokenizer().setInputCol("text").setOutputCol("words"),
+      new HashingTF().setNumFeatures(1000).setInputCol("words").setOutputCol("features"),
+      new LinearRegression()
+        .setMaxIter(10)
+        .setRegParam(0.3)
+        .setElasticNetParam(0.8)
+    ),
+    schema =
+      StructType(
+        StructField("text", StringType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("text", Seq(
+        "a b c d e spark",
+        "b d",
+        "spark f g h",
+        "hadoop mapreduce"
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4),
+      new DecisionTreeRegressor().setLabelCol("label").setFeaturesCol("indexedFeatures")
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4),
+      new RandomForestRegressor().setLabelCol("label").setFeaturesCol("indexedFeatures")
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new VectorIndexer()
+        .setInputCol("features")
+        .setOutputCol("indexedFeatures")
+        .setMaxCategories(4),
+      new GBTRegressor()
+        .setLabelCol("label")
+        .setFeaturesCol("indexedFeatures")
+        .setMaxIter(10)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new KMeans().setK(2).setSeed(1L)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
+      (Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
+      (Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
+      (Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
+      (Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
+      (Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    )).toDF("features", "label"),
+    stages = Seq(
+      new GaussianMixture().setK(2)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+        Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+        Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+        Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+        Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+        Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, "Hi I heard about Spark"),
+      (1, "I wish Java could use case classes"),
+      (2, "Logistic,regression,models,are,neat")
+    )).toDF("id", "sentence"),
+    stages = Seq(
+      new RegexTokenizer()
+        .setInputCol("sentence")
+        .setOutputCol("words")
+        .setPattern("\\W")
+    ),
+    schema =
+      StructType(
+        StructField("sentence", StringType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("sentence", Seq(
+        "Hi I heard about Spark",
+        "I wish Java could use case classes",
+        "Logistic,regression,models,are,neat"
+      ))
+    )
+  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, 18, 1.0, Vectors.dense(0.0, 10.0, 0.5), 1.0)
+    )).toDF("id", "hour", "mobile", "userFeatures", "clicked"),
+    stages = Seq(
+      new VectorAssembler()
+        .setInputCols(Array("hour", "mobile", "userFeatures"))
+        .setOutputCol("features")
+    ),
+    schema =
+      StructType(
+        StructField("hour", IntegerType) ::
+        StructField("mobile", DoubleType) ::
+        StructField("userFeatures",  ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) ::
+        Nil
+      ),
+    input = PlainDataset(
+      Column("hour", Seq(18)),
+      Column("mobile", Seq(1.0)),
+      Column("userFeatures", Seq(Vectors.dense(0.0, 10.0, 0.5)))
+    )
+  )
 //
 //  modelTest(
 //    data = session.read.format("libsvm")
@@ -597,8 +689,7 @@ class ModelsTest extends FunSpec with Matchers {
     trainData: DataFrame,
     stages: Seq[PipelineStage],
     schema: StructType,
-    input: PlainDataset,
-    defaultInput: Option[PlainDataset] = None
+    input: PlainDataset
   ): Unit = {
     val name = stages.map(_.getClass.getSimpleName).foldLeft("") {
       case ("", b) => b
@@ -614,11 +705,12 @@ class ModelsTest extends FunSpec with Matchers {
 
       val out = transformer(input)
 
-      val dfIn = defaultInput.getOrElse(input)
-      val origDf = pipelineModel.transform(dfIn.toDataFrame(session, schema))
+      val origDf = pipelineModel.transform(input.toDataFrame(session, schema))
       val origToPlain = PlainDataset.fromDataFrame(origDf)
 
       out shouldBe origToPlain
+
+      println(out)
     }
   }
 }

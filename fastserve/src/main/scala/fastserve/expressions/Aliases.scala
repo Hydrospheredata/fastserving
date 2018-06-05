@@ -20,8 +20,9 @@ trait Aliases extends UDFResolver {
     e: Expression
   ): (FastTransformer, StructType) = e match {
     case udf: ScalaUDF =>
-      val next = t.compose(applyUDF(name, udf, schema))
+      val next = t.andThen(applyUDF(name, udf, schema))
       val field = StructField(name, udf.dataType, udf.nullable)
+      println(s"Alias add field: $field")
       next -> schema.add(field)
     case a: Alias =>
       resolveAliasChild(t, schema, name, a.child)

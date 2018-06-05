@@ -11,11 +11,19 @@ trait UDFResolver extends ColumnResolver {
 
 
   def applyUDF(column: String, udf: ScalaUDF, schema: StructType): LocalTransform = {
-    val inputPrep = udf.children.map(c => resolveColumn(c, schema))
-    val (prepT, names) = inputPrep.foldLeft((identity[PlainDataset] _, Seq.empty[String])){
-      case ((t, names), (name, Some(step))) =>  t.andThen(step) -> (name +: names)
-      case ((t, names), (name, None)) =>  t -> (name +: names)
-    }
+//    val inputPrep = udf.children.map(c => resolveColumn(c, schema))
+//    val (prepT, names) = inputPrep.foldLeft((identity[PlainDataset] _, Seq.empty[String], schema)){
+//      case ((t, n, s), (name, ps, Some(step))) =>  (t.andThen(step), (name +: names), schema.)
+//      case ((t, n, s), (name, ps, None)) =>  t -> (name +: names)
+//    }
+
+    val (names, patchedS, prepT) = resolveColumns(udf.children, schema)
+    println("WTF???")
+    println(schema)
+    println(udf.children)
+    println(names)
+    println(column)
+    println()
 
     val maybeFields = names.map(n => n -> schema.find(_.name == n))
     val invalid = maybeFields.exists({case (n, f) => f.isEmpty})
@@ -26,7 +34,11 @@ trait UDFResolver extends ColumnResolver {
     val namesWithFields = maybeFields.collect({case (n, Some(f)) => n -> f.dataType}).toMap
 
     val udfF = convertUdf(udf.function, names.size)
-    prepT.andThen(d => {
+    prepT.compose(d => {
+      println(s"CALLL: $udf")
+      println("In:")
+      println(namesWithFields)
+      println(d.toString)
       val accessors = namesWithFields.map({case (n, dt) => {
         val c = d.columns(d.columnsId(n))
         ItemAccessor(c, dt)
