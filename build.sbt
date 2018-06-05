@@ -1,4 +1,5 @@
 ThisBuild / scalaVersion  := "2.11.8"
+ThisBuild / version  := "0.0.1"
 
 val localserve = project.in(file("localserve"))
   .settings(
