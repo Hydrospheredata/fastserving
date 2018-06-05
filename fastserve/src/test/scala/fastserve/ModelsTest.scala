@@ -194,33 +194,38 @@ class ModelsTest extends FunSpec with Matchers {
       ))
     )
   )
-//
-//  modelTest(
-//    trainData = session.createDataFrame(Seq(
-//      (0, Vectors.dense(1.0, 0.1, -1.0)),
-//      (1, Vectors.dense(2.0, 1.1, 1.0)),
-//      (2, Vectors.dense(3.0, 10.1, 3.0))
-//    )).toDF("id", "features"),
-//    stages = Seq(
-//      new MinMaxScaler()
-//        .setInputCol("features")
-//        .setOutputCol("scaledFeatures")
-//    ),
-//    schema =
-//      StructType(
-//        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
-//      ),
-//    input = PlainDataset(
-//      columnsId = Map("features" -> 0),
-//      columns = Seq(
-//        Column("features", Seq(
-//          Vectors.dense(1.0, 0.1, -1.0),
-//          Vectors.dense(2.0, 1.1, 1.0),
-//          Vectors.dense(3.0, 10.1, 3.0)
-//        ))
-//      )
-//    )
-//  )
+
+  modelTest(
+    trainData = session.createDataFrame(Seq(
+      (0, Vectors.dense(1.0, 0.1, -1.0)),
+      (1, Vectors.dense(2.0, 1.1, 1.0)),
+      (2, Vectors.dense(3.0, 10.1, 3.0))
+    )).toDF("id", "features"),
+    stages = Seq(
+      new MinMaxScaler()
+        .setInputCol("features")
+        .setOutputCol("scaledFeatures")
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = PlainDataset(
+      Column("features", Seq(
+        Vectors.dense(1.0, 0.1, -1.0),
+        Vectors.dense(2.0, 1.1, 1.0),
+        Vectors.dense(3.0, 10.1, 3.0)
+      ))
+    ),
+    defaultInput = Some(
+      PlainDataset(
+        Column("features", Seq(
+          Vectors.dense(1.0, 0.1, -1.0),
+          Vectors.dense(2.0, 1.1, 1.0),
+          Vectors.dense(3.0, 10.1, 3.0)
+        ))
+      )
+    ))
 //
 //  modelTest(
 //    trainData = session.createDataFrame(Seq(
@@ -592,7 +597,8 @@ class ModelsTest extends FunSpec with Matchers {
     trainData: DataFrame,
     stages: Seq[PipelineStage],
     schema: StructType,
-    input: PlainDataset
+    input: PlainDataset,
+    defaultInput: Option[PlainDataset] = None
   ): Unit = {
     val name = stages.map(_.getClass.getSimpleName).foldLeft("") {
       case ("", b) => b
@@ -608,7 +614,8 @@ class ModelsTest extends FunSpec with Matchers {
 
       val out = transformer(input)
 
-      val origDf = pipelineModel.transform(input.toDataFrame(session, schema))
+      val dfIn = defaultInput.getOrElse(input)
+      val origDf = pipelineModel.transform(dfIn.toDataFrame(session, schema))
       val origToPlain = PlainDataset.fromDataFrame(origDf)
 
       out shouldBe origToPlain

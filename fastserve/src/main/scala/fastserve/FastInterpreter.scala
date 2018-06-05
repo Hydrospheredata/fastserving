@@ -18,7 +18,6 @@ object FastInterpreter extends UDFResolver {
     case barr: AnalysisBarrier => mkFastTransformer(curr, barr.child, schema)
     case _: LogicalRDD => curr
     case pr @ Project(exprs, child) =>
-
       val (nextT, nextSchema) = exprs.foldLeft((curr, schema)){
         case ((t, schema), att: AttributeReference) =>
           val field = StructField(att.name, att.dataType, att.nullable, att.metadata)
