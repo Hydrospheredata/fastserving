@@ -2,11 +2,10 @@ package fastserve
 
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.classification.{DecisionTreeClassifier, GBTClassifier, NaiveBayes, RandomForestClassifier}
-import org.apache.spark.ml.clustering.{GaussianMixture, KMeans}
+import org.apache.spark.ml.clustering.{GaussianMixture, KMeans, LDA}
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.linalg.{DenseVector, VectorUDT, Vectors}
 import org.apache.spark.ml.{Pipeline, PipelineStage}
-import org.apache.spark.ml.linalg.VectorUDT
 import org.apache.spark.ml.regression.{DecisionTreeRegressor, GBTRegressor, LinearRegression, RandomForestRegressor}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
@@ -661,35 +660,61 @@ class ModelsTest extends FunSpec with Matchers {
       StructType(
         StructField("hour", IntegerType) ::
         StructField("mobile", DoubleType) ::
-        StructField("userFeatures",  ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) ::
+        StructField("userFeatures", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) ::
         Nil
       ),
     input = PlainDataset(
       Column("hour", Seq(18)),
       Column("mobile", Seq(1.0)),
       Column("userFeatures", Seq(Vectors.dense(0.0, 10.0, 0.5)))
+    ),
+    sample = Some(
+      session.createDataFrame(Seq(
+        (0, 18, 1.0, Vectors.dense(0.0, 10.0, 0.5), 1.0)
+      )).toDF("id", "hour", "mobile", "userFeatures", "clicked")
     )
   )
-//
-//  modelTest(
-//    data = session.read.format("libsvm")
-//      .load(getClass.getResource("/data/mllib/sample_lda_libsvm_data.txt").getPath),
-//    steps = Seq(
-//      new LDA().setK(10).setMaxIter(10)
-//    ),
-//    columns = Seq(
-//      "topicDistribution"
-//    ),
-//    accuracy = 1
-//  )
+
+  modelTest(
+    trainData = session.read.format("libsvm").load(getClass.getClassLoader.getResource("sample_lda_libsvm_data.txt").getPath),
+    stages = Seq(
+      new LDA().setK(10).setMaxIter(10)
+    ),
+    schema =
+      StructType(
+        StructField("features", ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType) :: Nil
+      ),
+    input = {
+        val df = session.read.format("libsvm").load(getClass.getClassLoader.getResource("sample_lda_libsvm_data.txt").getPath)
+        PlainDataset.fromDataFrame(df.select("features"))
+      },
+    compare = (a: PlainDataset, b: PlainDataset) => {
+
+      def compareDistribution(): Boolean = {
+        val i1 = a.columnByName("topicDistribution").items
+        val i2 = b.columnByName("topicDistribution").items
+
+        (0 until a.size).map(i => {
+          val v1 = i1(i).asInstanceOf[DenseVector]
+          val v2 = i2(i).asInstanceOf[DenseVector]
+          v1.values.zip(v2.values).map({case (d1, d2) => if ((d1 - d2).abs < 1) 1 else 0}).product
+        }).product == 1
+      }
+
+      (a.columnNames.sorted == b.columnNames.sorted) &&
+        (a.columnByName("features") == b.columnByName("features")) &&
+        compareDistribution()
+    }
+  )
 
 
-  
   def modelTest(
     trainData: DataFrame,
     stages: Seq[PipelineStage],
     schema: StructType,
-    input: PlainDataset
+    input: PlainDataset,
+    sample: Option[DataFrame] = None,
+    compare: (PlainDataset, PlainDataset) => Boolean = (a: PlainDataset, b: PlainDataset) => a.equals(b)
   ): Unit = {
     val name = stages.map(_.getClass.getSimpleName).foldLeft("") {
       case ("", b) => b
@@ -700,17 +725,32 @@ class ModelsTest extends FunSpec with Matchers {
       val pipeline = new Pipeline().setStages(stages.toArray)
       val pipelineModel = pipeline.fit(trainData)
 
-      val emptyDf = session.createDataFrame(session.sparkContext.emptyRDD[Row], schema)
-      val transformer = FastInterpreter.fromTransformer(pipelineModel, emptyDf)
+
+      val interpSample = sample.getOrElse(session.createDataFrame(session.sparkContext.emptyRDD[Row], schema))
+      val transformer = FastInterpreter.fromTransformer(pipelineModel, interpSample)
 
       val out = transformer(input)
 
       val origDf = pipelineModel.transform(input.toDataFrame(session, schema))
       val origToPlain = PlainDataset.fromDataFrame(origDf)
 
-      out shouldBe origToPlain
+      def mkMessage(info: String)(local: PlainDataset, default: PlainDataset): String = {
+        info + "\n" +
+          "Local:\n" +
+          local.toString + "\n" +
+          "Spark:\n" +
+          default.toString + "\n"
+      }
 
-      println(out)
+      try {
+        if (!compare(out, origToPlain)) {
+          fail(mkMessage("Got different outputs:")(out, origToPlain))
+        }
+      } catch {
+        case e: Throwable =>
+          fail(mkMessage("Compare function failed")(out, origToPlain), e)
+      }
+
     }
   }
 }

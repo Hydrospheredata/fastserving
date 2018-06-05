@@ -14,6 +14,8 @@ class PlainDataset(val columns: Seq[Column]) {
 
   def columnNames: Seq[String] = columnsId.keys.toSeq
 
+  def columnByName(name: String): Column = columns(columnsId(name))
+
   def addColumn(c: Column): PlainDataset = {
     new PlainDataset(columns :+ c)
   }

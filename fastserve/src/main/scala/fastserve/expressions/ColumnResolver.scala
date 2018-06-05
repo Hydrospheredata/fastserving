@@ -3,7 +3,7 @@ package fastserve.expressions
 
 import fastserve.PlainDataset
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, Expression, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, CreateNamedStruct, Expression, ScalaUDF}
 import org.apache.spark.sql.types._
 
 trait ColumnResolver  {
@@ -35,7 +35,8 @@ trait ColumnResolver  {
         })
       )
       (name, casted, Some(transform))
-    case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x")
+    case cns: CreateNamedStruct => ???
+    case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
   }
 
   def resolveColumns(exprs: Seq[Expression], schema: StructType): (Seq[String], StructType, LocalTransform) = {

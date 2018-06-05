@@ -11,19 +11,7 @@ trait UDFResolver extends ColumnResolver {
 
 
   def applyUDF(column: String, udf: ScalaUDF, schema: StructType): LocalTransform = {
-//    val inputPrep = udf.children.map(c => resolveColumn(c, schema))
-//    val (prepT, names) = inputPrep.foldLeft((identity[PlainDataset] _, Seq.empty[String], schema)){
-//      case ((t, n, s), (name, ps, Some(step))) =>  (t.andThen(step), (name +: names), schema.)
-//      case ((t, n, s), (name, ps, None)) =>  t -> (name +: names)
-//    }
-
     val (names, patchedS, prepT) = resolveColumns(udf.children, schema)
-    println("WTF???")
-    println(schema)
-    println(udf.children)
-    println(names)
-    println(column)
-    println()
 
     val maybeFields = names.map(n => n -> schema.find(_.name == n))
     val invalid = maybeFields.exists({case (n, f) => f.isEmpty})
@@ -35,10 +23,6 @@ trait UDFResolver extends ColumnResolver {
 
     val udfF = convertUdf(udf.function, names.size)
     prepT.compose(d => {
-      println(s"CALLL: $udf")
-      println("In:")
-      println(namesWithFields)
-      println(d.toString)
       val accessors = namesWithFields.map({case (n, dt) => {
         val c = d.columns(d.columnsId(n))
         ItemAccessor(c, dt)
@@ -58,6 +42,7 @@ trait UDFResolver extends ColumnResolver {
   }
 
   object ItemAccessor {
+
     class DefaultAccessor(c: Column) extends ItemAccessor {
       override def get(i:Int): Any = c.items(i)
     }
