@@ -7,6 +7,7 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference}
 import org.apache.spark.sql.catalyst.plans.logical.{AnalysisBarrier, LocalRelation, LogicalPlan, Project}
 import org.apache.spark.sql.catalyst.trees.TreeNode
 import org.apache.spark.sql.execution.LogicalRDD
+import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Dataset, Row}
 
@@ -43,6 +44,7 @@ object FastInterpreter extends UDFResolver {
     case pr: Project => reversePlan(pr.child, pr :: acc)
     case _: LogicalRDD => acc
     case _: LocalRelation => acc
+    case _: LogicalRelation => acc
     case x => throw new NotImplementedError(s"Unexpected expression $x: ${x.getClass}")
   }
 
