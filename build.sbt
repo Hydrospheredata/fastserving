@@ -1,5 +1,6 @@
 ThisBuild / scalaVersion  := "2.11.8"
 ThisBuild / version  := "0.0.1"
+ThisBuild / organization := "io.hydrosphere"
 
 val localserve = project.in(file("localserve"))
   .settings(
@@ -13,5 +14,5 @@ val localserve = project.in(file("localserve"))
   )
 
 val bench = project.in(file("bench"))
-  .dependsOn(localserve)
+  .dependsOn(localserve % "compile->compile;compile->test")
   .enablePlugins(JmhPlugin)
