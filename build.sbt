@@ -2,7 +2,7 @@ ThisBuild / scalaVersion  := "2.11.8"
 ThisBuild / version  := "0.0.1"
 ThisBuild / organization := "io.hydrosphere"
 
-val fastserving = project.in(file("fastserving"))
+lazy val fastserving = project.in(file("fastserving"))
   .settings(
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "2.3.0",
@@ -13,6 +13,8 @@ val fastserving = project.in(file("fastserving"))
     )
   )
 
-val bench = project.in(file("bench"))
+lazy val bench = project.in(file("bench"))
   .dependsOn(fastserving % "compile->compile;compile->test")
   .enablePlugins(JmhPlugin)
+
+lazy val root = project.in(file(".")).aggregate(fastserving)

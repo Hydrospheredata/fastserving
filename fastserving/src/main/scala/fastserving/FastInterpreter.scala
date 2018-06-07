@@ -53,4 +53,5 @@ object FastInterpreter extends UDFResolver {
     val plan = t.transform(sample).queryExecution.logical
     mkFastTransformer(plan, sample.schema)
   }
+
 }

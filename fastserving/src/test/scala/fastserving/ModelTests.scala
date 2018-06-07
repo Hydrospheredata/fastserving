@@ -82,7 +82,7 @@ class ModelTests extends FunSpec with BeforeAndAfterAll {
 
       val sampleDf = setup.interpSample.mkDf(session)
       val transformer = try {
-        FastInterpreter.fromTransformer(pipelineModel, sampleDf)
+        FastTransformer.build(pipelineModel, session, setup.interpSample)
       } catch {
         case e: Exception => fail(s"failed ${sampleDf.queryExecution.logical}", e)
       }
