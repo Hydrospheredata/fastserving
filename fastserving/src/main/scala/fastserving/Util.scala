@@ -1,4 +1,4 @@
-package localserve
+package fastserving
 
 object Util {
 

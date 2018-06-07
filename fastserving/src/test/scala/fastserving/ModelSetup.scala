@@ -1,4 +1,4 @@
-package localserve
+package fastserving
 
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.ml.classification.RandomForestClassifier

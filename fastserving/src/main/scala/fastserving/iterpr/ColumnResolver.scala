@@ -1,7 +1,7 @@
-package localserve.iterpr
+package fastserving.iterpr
 
 
-import localserve.PlainDataset
+import fastserving.PlainDataset
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Cast, CreateNamedStruct, Expression, ScalaUDF}
 import org.apache.spark.sql.types._

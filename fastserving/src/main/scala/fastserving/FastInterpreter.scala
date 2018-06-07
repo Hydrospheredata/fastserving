@@ -1,6 +1,6 @@
-package localserve
+package fastserving
 
-import localserve.iterpr.{Aliases, UDFResolver}
+import fastserving.iterpr.{Aliases, UDFResolver}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.catalyst.analysis.UnresolvedStar
 import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference}

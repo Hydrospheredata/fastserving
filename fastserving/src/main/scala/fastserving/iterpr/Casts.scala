@@ -1,6 +1,6 @@
-package localserve.iterpr
+package fastserving.iterpr
 
-import localserve.{Column, PlainDataset}
+import fastserving.{Column, PlainDataset}
 import org.apache.spark.sql.catalyst.expressions.Cast
 import org.apache.spark.sql.types._
 

@@ -1,4 +1,4 @@
-package localserve
+package fastserving
 
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.{Pipeline, Transformer}

@@ -2,7 +2,7 @@ ThisBuild / scalaVersion  := "2.11.8"
 ThisBuild / version  := "0.0.1"
 ThisBuild / organization := "io.hydrosphere"
 
-val localserve = project.in(file("localserve"))
+val fastserving = project.in(file("fastserving"))
   .settings(
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "2.3.0",
@@ -14,5 +14,5 @@ val localserve = project.in(file("localserve"))
   )
 
 val bench = project.in(file("bench"))
-  .dependsOn(localserve % "compile->compile;compile->test")
+  .dependsOn(fastserving % "compile->compile;compile->test")
   .enablePlugins(JmhPlugin)

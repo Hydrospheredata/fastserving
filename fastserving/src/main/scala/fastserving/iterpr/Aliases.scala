@@ -1,6 +1,6 @@
-package localserve.iterpr
+package fastserving.iterpr
 
-import localserve.{Column, FastTransformer, PlainDataset}
+import fastserving.{Column, FastTransformer, PlainDataset}
 import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Expression, ScalaUDF}
 import org.apache.spark.sql.types.{StructField, StructType}
 

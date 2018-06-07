@@ -2,7 +2,7 @@ package test
 
 import java.util.concurrent.TimeUnit
 
-import localserve._
+import fastserving._
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
