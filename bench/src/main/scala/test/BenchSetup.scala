@@ -1,6 +1,7 @@
 package test
 
-import fastserving.{FastInterpreter, FastTransformer, ModelSetup}
+import fastserving.iterpr.FastInterpreter
+import fastserving.{FastTransformer, ModelSetup}
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, SparkSession}

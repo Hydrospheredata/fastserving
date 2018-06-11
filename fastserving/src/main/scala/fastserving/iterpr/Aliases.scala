@@ -10,8 +10,9 @@ trait Aliases extends UDFResolver {
     curr: FastTransformer,
     schema: StructType,
     alias: Alias
-  ): (FastTransformer, StructType) =
+  ): (FastTransformer, StructType) = {
     resolveAliasChild(curr, schema, alias.name, alias.child)
+  }
 
   def resolveAliasChild(
     t: FastTransformer,
@@ -25,12 +26,17 @@ trait Aliases extends UDFResolver {
       next -> schema.add(field)
     case a: Alias => resolveAliasChild(t, schema, name, a.child)
     case att: AttributeReference =>
-      val next = t.andThen(d => {
-        val orig = d.columnByName(att.name)
-        d.addColumn(Column(name, orig.items))
-      })
-      val field = StructField(name, att.dataType, att.nullable)
-      next -> schema.add(field)
+      val existising = schema.find(_.name == name)
+      existising match {
+        case Some(_) => t -> schema
+        case None =>
+          val next = t.andThen(d => {
+            val orig = d.columnByName(att.name)
+            d.addColumn(Column(name, orig.items))
+          })
+          val field = StructField(name, att.dataType, att.nullable)
+          next -> schema.add(field)
+      }
 
     case x => throw new NotImplementedError(s"Unexpected alias($name) child: $x, ${x.getClass}")
   }

@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.sql.SparkSession
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 
 class ModelTests extends FunSpec with BeforeAndAfterAll {
@@ -81,33 +82,35 @@ class ModelTests extends FunSpec with BeforeAndAfterAll {
       val pipelineModel = pipeline.fit(trainDf)
 
       val sampleDf = setup.interpSample.mkDf(session)
-      val transformer = try {
-        FastTransformer.build(pipelineModel, session, setup.interpSample)
-      } catch {
-        case e: Exception => fail(s"failed ${sampleDf.queryExecution.logical}", e)
-      }
-
-      val out = transformer(setup.input)
-
-      val schema = setup.interpSample.mkDf(session).schema
-      val origDf = pipelineModel.transform(setup.input.toDataFrame(session, schema))
-      val origToPlain = PlainDataset.fromDataFrame(origDf)
-
-      def mkMessage(info: String)(local: PlainDataset, default: PlainDataset): String = {
-        info + "\n" +
-          "Local:\n" +
-          local.toString + "\n" +
-          "Spark:\n" +
-          default.toString + "\n"
-      }
-
       try {
-        if (!compare(out, origToPlain)) {
-          fail(mkMessage("Got different outputs:")(out, origToPlain))
+        val transformer = FastTransformer.build(pipelineModel, session, setup.interpSample)
+
+        val out = transformer(setup.input)
+
+        val schema = setup.interpSample.mkDf(session).schema
+        val origDf = pipelineModel.transform(setup.input.toDataFrame(session, schema))
+        val origToPlain = PlainDataset.fromDataFrame(origDf)
+
+        def mkMessage(info: String)(local: PlainDataset, default: PlainDataset): String = {
+          info + "\n" +
+            "Local:\n" +
+            local.toString + "\n" +
+            "Spark:\n" +
+            default.toString + "\n"
+        }
+
+        try {
+          if (!compare(out, origToPlain)) {
+            fail(mkMessage("Got different outputs:")(out, origToPlain))
+          }
+        } catch {
+          case e: Throwable =>
+            fail(mkMessage("Compare function failed")(out, origToPlain), e)
         }
       } catch {
-        case e: Throwable =>
-          fail(mkMessage("Compare function failed")(out, origToPlain), e)
+        case e: Exception =>
+          val wr = new RuntimeException(s"failed ${sampleDf.queryExecution.logical}", e)
+          throw wr
       }
     }
   })

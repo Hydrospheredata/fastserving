@@ -1,5 +1,6 @@
 package fastserving
 
+import fastserving.iterpr.FastInterpreter
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.SparkSession
 

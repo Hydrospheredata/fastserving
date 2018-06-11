@@ -48,6 +48,7 @@ object TestSetups {
     interpSample = Sample.empty(StructType(
         StructField("features", VectorUDT) :: Nil
     )),
+//    interpSample = Sample.real(_.createDataFrame(DenseFeaturesDoubleLabels).toDF("features", "label")),
     input = PlainDataset(
       Column("features", Seq(
         Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
