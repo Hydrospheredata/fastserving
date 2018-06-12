@@ -12,7 +12,7 @@ interpret it's logical plan into FastTransformer.
 
 Example:
 ```scala
-import fastserve._
+import fastserving._
 
 val session: SparkSession = _
 // train or load model
