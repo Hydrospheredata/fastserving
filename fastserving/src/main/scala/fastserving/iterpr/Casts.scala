@@ -7,7 +7,7 @@ object Casts {
   def castFunction(from: DataType, to: DataType): Any => Any = to match {
     case DoubleType => castToDouble(from)
     case StringType => (a: Any) => a.toString
-    case _ => throw new NotImplementedError(s"Cast to double not implemented for $from")
+    case _ => throw new NotImplementedError(s"Cast to $to not implemented for $from")
   }
 
   private def castToDouble(from: DataType): Any => Double = from match {

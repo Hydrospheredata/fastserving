@@ -34,6 +34,31 @@ class StrIndVecIndRdnForestClassifier {
 
 }
 
+@State(Scope.Benchmark)
+@Measurement(timeUnit = TimeUnit.MILLISECONDS)
+class ChisqSelector {
+
+  val setup = BenchSetup(TestSetups.`ChiSqSelector`)
+
+  val fastTransformer = setup.fastTransformer
+  val plainDs = setup.setup.input
+
+  val transfromer = setup.pipelineModel
+  val sparkDf = setup.sparkDf
+
+  @Benchmark
+  def fast(): PlainDataset = {
+    fastTransformer(plainDs)
+  }
+
+  @Benchmark
+  def spark(): Array[Row] = {
+    transfromer.transform(sparkDf).collect()
+  }
+
+
+}
+
 object BenchAll {
 
 //  val conf = new SparkConf()
