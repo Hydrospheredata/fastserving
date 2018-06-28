@@ -4,7 +4,7 @@ import fastserving.{Column, PlainDataset}
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, Cast, CreateNamedStruct, Expression, GenericRow, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, Cast, CreateNamedStruct, CreateStruct, Expression, GenericRow, ScalaUDF}
 import org.apache.spark.sql.types.{DataType, StructType}
 
 abstract class ArgAccessor { self =>
@@ -97,17 +97,23 @@ object ArgResolver {
     case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
   }
 
-  def resolver(expr: Expression, schema: StructType): ArgResolver = expr match {
-    case att: Attribute => resolveAtt(att, schema)._1
-    case cast: Cast => resolveCast(cast, schema)._1
-    case cns: CreateNamedStruct =>
-      val out = cns.children.grouped(2).map(_.apply(1)).map(v => lowResolve(v, schema)).toSeq
+  def resolver(expr: Expression, schema: StructType): ArgResolver = {
+    def resolveStructChildren(ch: Seq[Expression]): ArgResolver = {
+      val out = ch.map(v => lowResolve(v, schema))
       val resolver = ArgResolver(ds => {
         val x = out.map({case (r, dt) => r.mkAccessor(ds)})
         ArgAccessor.asRow(x)
       })
       resolver
-    case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
+    }
+
+    expr match {
+      case att: Attribute => resolveAtt(att, schema)._1
+      case cast: Cast => resolveCast(cast, schema)._1
+      case cns: CreateStruct => resolveStructChildren(cns.children)
+      case cns: CreateNamedStruct => resolveStructChildren(cns.children.grouped(2).map(_.apply(1)).toSeq)
+      case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
+    }
   }
 
 }

@@ -116,5 +116,5 @@ class ModelTests extends FunSpec with BeforeAndAfterAll {
   })
 
 
-  override def afterAll(): Unit = session.close()
+  override def afterAll(): Unit = session.stop()
 }

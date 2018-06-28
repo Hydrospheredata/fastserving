@@ -1,5 +1,6 @@
 package fastserving.iterpr
 
+import fastserving.interp.CatalystCompat
 import fastserving.{ConstFastTransformer, FastTransformer}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.sql.catalyst.analysis.{UnresolvedAttribute, UnresolvedStar}
@@ -17,7 +18,7 @@ object FastInterpreter extends UDFResolver {
     interp(plan, ConstFastTransformer, schema)
 
   private def interp(root: TreeNode[_], curr: FastTransformer, schema: StructType): FastTransformer = {
-    val projects = selectProjections(root, List.empty)
+    val projects = CatalystCompat.selectProjections(root, List.empty)
     val (tF, sF) = projects.foldLeft((curr, schema)) {
       case ((t, s), pr) =>
         pr.expressions.foldLeft((t, s)){
@@ -35,7 +36,6 @@ object FastInterpreter extends UDFResolver {
     */
   @tailrec
   private def selectProjections(node: Any, acc: List[Project]): List[Project] = node match {
-    case barr: AnalysisBarrier => selectProjections(barr.child, acc)
     case pr: Project =>
       pr.child match {
         case _ =>
@@ -48,7 +48,7 @@ object FastInterpreter extends UDFResolver {
           val next = if (ignore)  acc else pr :: acc
           selectProjections(pr.child, next)
       }
-    case _: LeafNode => acc
+    case _: LogicalPlan => acc
     case x => throw new NotImplementedError(s"Unexpected expression $x: ${x.getClass}")
   }
 
