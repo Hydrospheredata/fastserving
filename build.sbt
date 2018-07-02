@@ -25,5 +25,8 @@ lazy val fastserving = project.in(file("fastserving"))
 lazy val bench = project.in(file("bench"))
   .dependsOn(fastserving % "compile->compile;compile->test")
   .enablePlugins(JmhPlugin)
+  .settings(
+    sourceGenerators in Compile += sourceManaged.map(out => BenchGen.genAll(out)).taskValue
+  )
 
 lazy val root = project.in(file(".")).aggregate(fastserving)

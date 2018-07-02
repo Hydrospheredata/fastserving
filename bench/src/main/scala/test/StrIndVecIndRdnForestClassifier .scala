@@ -9,55 +9,55 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.annotations.Benchmark
 
-@State(Scope.Benchmark)
-@Measurement(timeUnit = TimeUnit.MILLISECONDS)
-class StrIndVecIndRdnForestClassifier {
-
-  val setup = BenchSetup(TestSetups.`StrInd-VecInd-RandForestClassifier`)
-
-  val fastTransformer = setup.fastTransformer
-  val plainDs = setup.setup.input
-
-  val transfromer = setup.pipelineModel
-  val sparkDf = setup.sparkDf
-
-  @Benchmark
-  def fast(): PlainDataset = {
-    fastTransformer(plainDs)
-  }
-
-  @Benchmark
-  def spark(): Array[Row] = {
-    transfromer.transform(sparkDf).collect()
-  }
-
-
-}
-
-@State(Scope.Benchmark)
-@Measurement(timeUnit = TimeUnit.MILLISECONDS)
-class ChisqSelector {
-
-  val setup = BenchSetup(TestSetups.`ChiSqSelector`)
-
-  val fastTransformer = setup.fastTransformer
-  val plainDs = setup.setup.input
-
-  val transfromer = setup.pipelineModel
-  val sparkDf = setup.sparkDf
-
-  @Benchmark
-  def fast(): PlainDataset = {
-    fastTransformer(plainDs)
-  }
-
-  @Benchmark
-  def spark(): Array[Row] = {
-    transfromer.transform(sparkDf).collect()
-  }
-
-
-}
+//@State(Scope.Benchmark)
+//@Measurement(timeUnit = TimeUnit.MILLISECONDS)
+//class StrIndVecIndRdnForestClassifier {
+//
+//  val setup = BenchSetup(TestSetups.`StrInd-VecInd-RandForestClassifier`)
+//
+//  val fastTransformer = setup.fastTransformer
+//  val plainDs = setup.setup.input
+//
+//  val transfromer = setup.pipelineModel
+//  val sparkDf = setup.sparkDf
+//
+//  @Benchmark
+//  def fast(): PlainDataset = {
+//    fastTransformer(plainDs)
+//  }
+//
+//  @Benchmark
+//  def spark(): Array[Row] = {
+//    transfromer.transform(sparkDf).collect()
+//  }
+//
+//
+//}
+//
+//@State(Scope.Benchmark)
+//@Measurement(timeUnit = TimeUnit.MILLISECONDS)
+//class ChisqSelector {
+//
+//  val setup = BenchSetup(TestSetups.`ChiSqSelector`)
+//
+//  val fastTransformer = setup.fastTransformer
+//  val plainDs = setup.setup.input
+//
+//  val transfromer = setup.pipelineModel
+//  val sparkDf = setup.sparkDf
+//
+//  @Benchmark
+//  def fast(): PlainDataset = {
+//    fastTransformer(plainDs)
+//  }
+//
+//  @Benchmark
+//  def spark(): Array[Row] = {
+//    transfromer.transform(sparkDf).collect()
+//  }
+//
+//
+//}
 
 object BenchAll {
 
