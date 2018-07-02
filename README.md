@@ -29,8 +29,6 @@ val out = fastTransfomer(ds)
 ```
 
 Performance:
-
-SringIndexer-VectorIndexer-RandomForestClassifier:
 ```
 [info] Benchmark                                          Mode  Cnt        Score       Error  Units
 [info] Binarizer.fast                                    thrpt   20  1029521.883 ±  8764.727  ops/s
@@ -79,4 +77,3 @@ SringIndexer-VectorIndexer-RandomForestClassifier:
 [info] VectorInd_RandomForestRegr.fast                   thrpt   20   136064.649 ±  2706.702  ops/s
 [info] VectorInd_RandomForestRegr.spark                  thrpt   20       27.687 ±     1.764  ops/s
 ```
-....
