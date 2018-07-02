@@ -1,6 +1,6 @@
 package fastserving
 
-package object iterpr {
+package object interp {
 
   type LocalTransform = PlainDataset => PlainDataset
 }

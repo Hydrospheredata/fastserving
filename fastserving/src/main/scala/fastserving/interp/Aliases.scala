@@ -1,4 +1,4 @@
-package fastserving.iterpr
+package fastserving.interp
 
 import fastserving.{Column, FastTransformer, PlainDataset}
 import org.apache.spark.sql.catalyst.expressions.{Alias, AttributeReference, Expression, ScalaUDF}

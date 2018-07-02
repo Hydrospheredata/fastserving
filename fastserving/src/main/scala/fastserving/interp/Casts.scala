@@ -1,4 +1,4 @@
-package fastserving.iterpr
+package fastserving.interp
 
 import org.apache.spark.sql.types._
 

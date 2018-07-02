@@ -1,10 +1,10 @@
-package fastserving.iterpr
+package fastserving.interp
 
+import fastserving.interp.compat.UDFChildrenCompat
 import fastserving.{Column, PlainDataset}
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, Cast, CreateNamedStruct, CreateStruct, Expression, GenericRow, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{GenericRow, ScalaUDF}
 import org.apache.spark.sql.types.{DataType, StructType}
 
 abstract class ArgAccessor { self =>
@@ -61,61 +61,6 @@ object ArgResolver {
     ArgResolver(ds => ArgAccessor.directByType(ds.columnByName(name), dt))
   }
 
-  def resolveAtt(att: Attribute, schema: StructType): (ArgResolver, DataType) = att match {
-    case ref: AttributeReference => columnRef(ref.name, ref.dataType) -> ref.dataType
-    case att: UnresolvedAttribute =>
-      schema.find(_.name == att.name) match {
-        case None => throw new IllegalStateException(s"Can't resolve attr: $att")
-        case Some(f) => columnRef(att.name, f.dataType) -> f.dataType
-      }
-  }
-
-  def resolveCast(cast: Cast, schema: StructType): (ArgResolver, DataType) = {
-    val (underlying, dt) =  cast.child match {
-      case c: Cast => resolveCast(c, schema)
-      case att: Attribute => resolveAtt(att, schema)
-    }
-    if (cast.dataType == dt) {
-      underlying -> dt
-    } else {
-      underlying.map(Casts.castFunction(dt, cast.dataType)) -> cast.dataType
-    }
-  }
-
-  def resolveAlias(alias: Alias, schema: StructType): (ArgResolver, DataType) = {
-    alias.child match {
-      case att: Attribute => resolveAtt(att, schema)
-      case cast: Cast => resolveCast(cast, schema)
-      case x => throw new IllegalArgumentException(s"Unexpected expression in udf alias resolution: $x, ${x.getClass}")
-    }
-  }
-
-  def lowResolve(exp: Expression, schema: StructType): (ArgResolver, DataType) = exp match {
-    case att: Attribute => resolveAtt(att, schema)
-    case cast: Cast => resolveCast(cast, schema)
-    case alias: Alias => resolveAlias(alias, schema)
-    case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
-  }
-
-  def resolver(expr: Expression, schema: StructType): ArgResolver = {
-    def resolveStructChildren(ch: Seq[Expression]): ArgResolver = {
-      val out = ch.map(v => lowResolve(v, schema))
-      val resolver = ArgResolver(ds => {
-        val x = out.map({case (r, dt) => r.mkAccessor(ds)})
-        ArgAccessor.asRow(x)
-      })
-      resolver
-    }
-
-    expr match {
-      case att: Attribute => resolveAtt(att, schema)._1
-      case cast: Cast => resolveCast(cast, schema)._1
-      case cns: CreateStruct => resolveStructChildren(cns.children)
-      case cns: CreateNamedStruct => resolveStructChildren(cns.children.grouped(2).map(_.apply(1)).toSeq)
-      case x => throw new IllegalArgumentException(s"Unexpected expression in column resolution: $x, ${x.getClass}")
-    }
-  }
-
 }
 
 trait UDFResolver {
@@ -125,7 +70,7 @@ trait UDFResolver {
     udf: ScalaUDF,
     schema: StructType
   ): LocalTransform = {
-    val resolvers = udf.children.map(c => ArgResolver.resolver(c, schema))
+    val resolvers = udf.children.map(c => UDFChildrenCompat.resolver(c, schema))
 
     val arity = resolvers.length
     (ds: PlainDataset) => {

@@ -4,7 +4,7 @@ ThisBuild / organization := "io.hydrosphere"
 
 lazy val sparkVersionKey = settingKey[String]("Spark version")
 
-ThisBuild / sparkVersionKey := sys.props.getOrElse("sparkVersion", "2.3.0")
+ThisBuild / sparkVersionKey := sys.props.getOrElse("sparkVersion", "2.0.0")
 
 lazy val fastserving = project.in(file("fastserving"))
   .settings(PublishSettings.settings: _*)
@@ -12,9 +12,7 @@ lazy val fastserving = project.in(file("fastserving"))
     name := "fastserving",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     unmanagedSourceDirectories in Compile += {
-      val sparkVersion = sparkVersionKey.value
-      val dir = if (sparkVersion == "2.3.0") "2_3_0" else "2_x_x"
-      baseDirectory.value / "src" / "main" / s"spark_$dir"
+      baseDirectory.value / "src" / "main" / s"spark-${sparkVersionKey.value}"
     },
     version := version.value + s"_spark-${sparkVersionKey.value}",
     libraryDependencies ++= Seq(
