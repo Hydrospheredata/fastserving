@@ -27,8 +27,8 @@ case class ModelSetup(
 
 object TestSetups {
 
-  val sparkVersion = org.apache.spark.SPARK_VERSION
 
+  val sparkVersion = org.apache.spark.SPARK_VERSION
   val VectorUDT = ScalaReflection.schemaFor[org.apache.spark.ml.linalg.Vector].dataType
 
   val DenseFeaturesDoubleLabels = Seq(
@@ -586,59 +586,25 @@ object TestSetups {
   }
 
   val `GaussianMixture` = {
-    if (sparkVersion == "2.0.0") {
-      import org.apache.spark.mllib.linalg.{Vector => MLLIBVector}
-      import org.apache.spark.mllib.linalg.{Vectors => MLLIBVectors}
-
-      val DenseFeaturesDoubleLabels = Seq(
-        (MLLIBVectors.dense(4.0, 0.2, 3.0, 4.0, 5.0), 1.0),
-        (MLLIBVectors.dense(3.0, 0.3, 1.0, 4.1, 5.0), 1.0),
-        (MLLIBVectors.dense(2.0, 0.5, 3.2, 4.0, 5.0), 1.0),
-        (MLLIBVectors.dense(5.0, 0.7, 1.5, 4.0, 5.0), 1.0),
-        (MLLIBVectors.dense(1.0, 0.1, 7.0, 4.0, 5.0), 0.0),
-        (MLLIBVectors.dense(8.0, 0.3, 5.0, 1.0, 7.0), 0.0)
+    ModelSetup(
+      stages = Seq(
+        new GaussianMixture().setK(2)
+      ),
+      trainSample = Sample.real(_.createDataFrame(DenseFeaturesDoubleLabels).toDF("features", "label")),
+      interpSample = Sample.empty(StructType(
+        StructField("features", VectorUDT) :: Nil
+      )),
+      input = PlainDataset(
+        Column("features", Seq(
+          Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
+          Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
+          Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
+          Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
+          Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
+          Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
+        ))
       )
-
-      ModelSetup(
-        stages = Seq(
-          new GaussianMixture().setK(2)
-        ),
-        trainSample = Sample.real(_.createDataFrame(DenseFeaturesDoubleLabels).toDF("features", "label")),
-        interpSample = Sample.empty(StructType(
-          StructField("features", ScalaReflection.schemaFor[MLLIBVector].dataType) :: Nil
-        )),
-        input = PlainDataset(
-          Column("features", Seq(
-            MLLIBVectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
-            MLLIBVectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
-            MLLIBVectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
-            MLLIBVectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
-            MLLIBVectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
-            MLLIBVectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
-          ))
-        )
-      )
-    } else {
-      ModelSetup(
-        stages = Seq(
-          new GaussianMixture().setK(2)
-        ),
-        trainSample = Sample.real(_.createDataFrame(DenseFeaturesDoubleLabels).toDF("features", "label")),
-        interpSample = Sample.empty(StructType(
-          StructField("features", VectorUDT) :: Nil
-        )),
-        input = PlainDataset(
-          Column("features", Seq(
-            Vectors.dense(4.0, 0.2, 3.0, 4.0, 5.0),
-            Vectors.dense(3.0, 0.3, 1.0, 4.1, 5.0),
-            Vectors.dense(2.0, 0.5, 3.2, 4.0, 5.0),
-            Vectors.dense(5.0, 0.7, 1.5, 4.0, 5.0),
-            Vectors.dense(1.0, 0.1, 7.0, 4.0, 5.0),
-            Vectors.dense(8.0, 0.3, 5.0, 1.0, 7.0)
-          ))
-        )
-      )
-    }
+    )
   }
 
   val `RegexTokenizer` = {

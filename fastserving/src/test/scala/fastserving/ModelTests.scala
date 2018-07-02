@@ -3,7 +3,7 @@ package fastserving
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.linalg.DenseVector
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 
@@ -56,11 +56,12 @@ class ModelTests extends FunSpec with BeforeAndAfterAll {
     Test(`VectorInd-RandomForestRegr`),
     Test(`VectorInd-GBTRegr`),
     Test(`KMeans`),
-    Test(`GaussianMixture`),
     Test(`RegexTokenizer`),
     Test(`VectorAssembler`),
     Test(`LDA`, LDAcompare)
-  )
+  ) ++ {
+    if (sparkVersion != "2.0.0") Seq(Test(`GaussianMixture`)) else Seq.empty
+  }
 
   val conf = new SparkConf()
     .setMaster("local[2]")
@@ -80,7 +81,6 @@ class ModelTests extends FunSpec with BeforeAndAfterAll {
       val pipeline = new Pipeline().setStages(setup.stages.toArray)
       val trainDf = setup.trainSample.mkDf(session)
       val pipelineModel = pipeline.fit(trainDf)
-
       val sampleDf = setup.interpSample.mkDf(session)
       try {
         val transformer = FastTransformer.build(pipelineModel, session, setup.interpSample)

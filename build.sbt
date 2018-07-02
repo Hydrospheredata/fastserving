@@ -8,6 +8,7 @@ ThisBuild / sparkVersionKey := sys.props.getOrElse("sparkVersion", "2.0.0")
 
 lazy val fastserving = project.in(file("fastserving"))
   .settings(
+    name := s"fastserving_spark-${sparkVersionKey.value}",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     unmanagedSourceDirectories in Compile += {
       val sparkVersion = sparkVersionKey.value
