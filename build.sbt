@@ -4,7 +4,7 @@ ThisBuild / organization := "io.hydrosphere"
 
 lazy val sparkVersionKey = settingKey[String]("Spark version")
 
-ThisBuild / sparkVersionKey := sys.props.getOrElse("sparkVersion", "2.0.0")
+ThisBuild / sparkVersionKey := sys.props.getOrElse("sparkVersion", "2.3.0")
 
 lazy val fastserving = project.in(file("fastserving"))
   .settings(PublishSettings.settings: _*)
