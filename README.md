@@ -4,11 +4,23 @@ Spark-ml is built atop on DataFrames transformations.
 Serving these models on small datasets is really slow and inefficient,
 because it takes a lot of time to create and generate an execution plan for DataFrame for every request.
 
-We already tried to wrap every model and separate its logic from dataframe usage in [spark-mk-serving](https://github.com/Hydrospheredata/spark-ml-serving)
+We already tried to wrap every model and separate its logic from dataframe usage in [spark-ml-serving](https://github.com/Hydrospheredata/spark-ml-serving)
 and got a significant performance boost.
 Here we used a more general approach based on alternative catalyst's ast interpretation.
 To build a transformer we need to pass once an empty or real DataFrame sample into spark's transformer and then
 interpret it's logical plan into FastTransformer.
+
+Usage:
+```scala
+// for spark 2.0.0
+libraryDependencies += "io.hydrosphere" %% "fastserving" % s"0.0.1_spark-2.0.0"
+// for spark 2.1.0
+libraryDependencies += "io.hydrosphere" %% "fastserving" % s"0.0.1_spark-2.1.0"
+// for spark 2.2.0
+libraryDependencies += "io.hydrosphere" %% "fastserving" % s"0.0.1_spark-2.2.0"
+// for spark 2.3.0
+libraryDependencies += "io.hydrosphere" %% "fastserving" % s"0.0.1_spark-2.3.0"
+```
 
 Example:
 ```scala
