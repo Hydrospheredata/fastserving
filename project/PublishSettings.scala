@@ -15,12 +15,12 @@ object PublishSettings {
     publishArtifact in Test := false,
     pomIncludeRepository := { _ => false },
 
-    licenses := Seq("Apache 2.0 License" -> url("https://github.com/Hydrospheredata/mist")),
-    homepage := Some(url("https://github.com/Hydrospheredata/mist")),
+    licenses := Seq("Apache 2.0 License" -> url("https://github.com/Hydrospheredata/fastserving")),
+    homepage := Some(url("https://github.com/Hydrospheredata/fastserving")),
     scmInfo := Some(
           ScmInfo(
-            url("https://github.com/Hydrospheredata/mist"),
-            "scm:git@github.com:Hydrospheredata/mist.git"
+            url("https://github.com/Hydrospheredata/fastserving"),
+            "scm:git@github.com:Hydrospheredata/fastserving.git"
           )
         ),
     developers := List(
